@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
-import { View, Text, SafeAreaView, StatusBar, Image, TextInput, TouchableOpacity, Alert, AsyncStorage, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StatusBar, Image, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { Card, CardItem, } from 'native-base'
-import LinearGradient from 'react-native-linear-gradient'
-import { responsiveHeight, responsiveWidth, responsiveFontSize } from "react-native-responsive-dimensions";
-
-
-import { signup, emailVerification } from './AuthScreen'
+import { responsiveFontSize, responsiveWidth, responsiveHeight } from 'react-native-responsive-dimensions';
 
 import * as firebase from 'firebase'
 import 'firebase/firestore'
+
+import { signup, emailVerification } from './AuthScreen'
+
+console.disableYellowBox = true;
 
 export default class SignUpScreen extends Component {
 
@@ -16,10 +16,12 @@ export default class SignUpScreen extends Component {
         super(props)
         this.state = {
             UserName: '', email: '',
-            password: '', confirmPassword: '',
+            password: '', PhoneNumber: '',
+            ShopName: '', ShopLocation: [],
 
             errUs: '', errem: '',
-            errps: '', errcps: '',
+            errps: '', errpn: '',
+            errsn: '',
 
             formEmptyDialog: false, formErrorDialog: false, btnIndicator: false,
             btnDisabled: false, signupErrorDialog: false, signupError: '',
@@ -30,6 +32,7 @@ export default class SignUpScreen extends Component {
         this.isFormEmpty = this.isFormEmpty.bind(this)
         this.isErrorFree = this.isErrorFree.bind(this)
     }
+
     validate(text, type) {
         if (type == 'UserName') {
             this.setState({ UserName: text })
@@ -43,16 +46,31 @@ export default class SignUpScreen extends Component {
         }
         else if (type == 'password') {
             this.setState({ password: text })
-            let msg = this.getMatch(/^.{8,20}$/, text, "Password must be between 8 to 20 characters")
+            let msg = this.getMatch(/^.{6,20}$/, text, "Password must be between  to 20 characters")
             this.setState({ errps: msg })
         }
-        else if (type == 'confirmPassword') {
-            this.setState({ confirmPassword: text })
-            if (this.state.password != text)
-                this.setState({ errcps: "Does not match password" })
-            else
-                this.setState({ errcps: "" })
+        else if (type == 'PhoneNumber') {
+            this.setState({ PhoneNumber: text })
+            let msg = this.getMatch(/^((\+92)|(0092))-{0,1}\d{3}-{0,1}\d{7}$|^\d{11}$|^\d{4}-\d{7}$/, text, "Phone Number Incorrect")
+            this.setState({ errpn: msg })
         }
+        else if (type == 'ShopName') {
+            this.setState({ ShopName: text })
+        }
+    }
+
+    isFormEmpty() {
+        if (this.state.UserName != '' && this.state.email != '' && this.state.password != '' && this.state.PhoneNumber != '' && this.state.ShopName != '')
+            return false
+        this.setState({ formEmptyDialog: true })
+        return true
+    }
+
+    isErrorFree() {
+        if (this.state.errUs == '' && this.state.errem == '' && this.state.errps == '' && this.state.errpn == '' && this.state.errsn == '')
+            return true
+        this.setState({ formErrorDialog: true })
+        return false
     }
 
     getMatch(regex, text, errMsg) {
@@ -64,63 +82,47 @@ export default class SignUpScreen extends Component {
         return msg
     }
 
-    isFormEmpty() {
-        if (this.state.UserName != '' && this.state.email != '' && this.state.password != '' && this.state.confirmPassword != '')
-            return false
-        this.setState({ formEmptyDialog: true })
-        return true
-    }
-
-    isErrorFree() {
-        if (this.state.errUs == '' && this.state.errem == '' && this.state.errps == '' && this.state.errcps == '')
-            return true
-        this.setState({ formErrorDialog: true })
-        return false
-    }
-
-   goToLogin = async () => {
-        console.log('hello i am here')
-        let obj = { 'name': 'name' }
-firebase.firestore().collection('Users').doc().set(obj).then(() => console.log('hello world')).catch((error) => console.log('hello2\n:::::', error));
-    }
-
     /* goToLogin = async () => {
-         console.log('Hello')
-         if (!this.isFormEmpty() && this.isErrorFree()) {
-             this.setState({ btnDisabled: true })
-             this.setState({ btnIndicator: true })
- 
-             console.log('Hello2')
-             await signup(this.state.email, this.state.password).then(async () => {
-                 var user = firebase.auth().currentUser;
- 
-                 console.log('Hello3')
-                 if (user) {
- 
-                     console.log('hello3')
-                     var userObj = {
-                         UserName: this.state.UserName,
-                         email: this.state.email,
-                         password: this.state.password,
-                         type: 'Super User',
-                         userID: user.uid,
-                     }
-                 } else
-                     throw new Exception()
-                 firebase.firestore().collection('Users').doc().set(userObj).then(() => console.log('hello world')).catch((error) => console.log(error));
-                 emailVerification()
-                 this.setState(this.initialState)
-                 this.props.navigation.navigate('Login')
-             }).catch((error) => {
-                 this.setState({ signupError: error.message })
-                 this.setState({ signupErrorDialog: true })
-             }
-             ).finally(() => {
-                 this.setState({ btnDisabled: false })
-                 this.setState({ btnIndicator: false })
-             })
-         }
+         console.log('hello i am pressed')
+         let obj = { 'name': 'name' }
+         await firebase.firestore().collection('Users').doc().set(obj).then(() => console.log('hello world')).catch((error) => console.log('hello2\n:::::', error));
      }*/
+
+    goToLogin = async () => {
+        if (!this.isFormEmpty() && this.isErrorFree()) {
+            this.setState({ btnDisabled: true })
+            this.setState({ btnIndicator: true })
+
+            await signup(this.state.email, this.state.password).then(async () => {
+                var user = firebase.auth().currentUser;
+                if (user) {
+                    var userObj = {
+                        UserName: this.state.UserName,
+                        email: this.state.email,
+                        password: this.state.password,
+                        phonenumber: this.state.PhoneNumber,
+                        Shopname: this.state.ShopName,
+                        type: 'Super User',
+                        userID: user.uid,
+                    }
+                } else
+                    throw new Exception()
+                console.log('heloo')
+                await firebase.firestore().collection('Users').doc().set(userObj).then(() => console.log('hello world')).catch((error) => console.log(error));
+                // emailVerification()
+                this.setState(this.initialState)
+                this.props.navigation.navigate('Login')
+            }).catch((error) => {
+                Alert.alert(error.message)
+                this.setState({ signupError: error.message })
+                this.setState({ signupErrorDialog: true })
+            }
+            ).finally(() => {
+                this.setState({ btnDisabled: false })
+                this.setState({ btnIndicator: false })
+            })
+        }
+    }
 
     render() {
         let btnDisplay;
@@ -131,99 +133,115 @@ firebase.firestore().collection('Users').doc().set(obj).then(() => console.log('
 
         return (
             <SafeAreaView style={Styles.container}>
+                <Card style={Styles.LoginContainer}>
+                    <Text style={Styles.HearderText}>Create Account</Text>
 
-                    <Card style={Styles.LoginContainer}>
-                        <Text style={Styles.HearderText}>Create Account</Text>
+                    <View style={Styles.InputImage}>
+                        <Image
+                            source={require('../Images/user.png')}
+                            style={Styles.ImageStyle}
+                        />
+                        <TextInput
+                            style={Styles.inputField}
+                            placeholder='Enter UserName'
+                            underlineColorAndroid="transparent"
+                            onChangeText={text => this.validate(text, "UserName")}
+                            value={this.state.UserName}
+                        />
+                    </View>
+                    <Text style={Styles.error}>
+                        {this.state.errfn}
+                    </Text>
 
-                        <View style={Styles.InputImage}>
-                            <Image
-                                source={require('../Images/user.png')}
-                                style={Styles.ImageStyle}
-                            />
-                            <TextInput
-                                style={Styles.inputField}
-                                placeholder='Enter UserName'
-                                underlineColorAndroid="transparent"
-                                onChangeText={text => this.validate(text, "UserName")}
-                                value={this.state.UserName}
-                            />
-                        </View>
-                        <Text style={Styles.error}>
-                            {this.state.errfn}
-                        </Text>
+                    <View style={Styles.InputImage}>
+                        <Image
+                            source={require('../Images/lock.png')}
+                            style={Styles.ImageStyle}
+                        />
+                        <TextInput
+                            style={Styles.inputField}
+                            placeholder='Password'
+                            keyboardType='default'
+                            underlineColorAndroid="transparent"
+                            secureTextEntry={true}
+                            onChangeText={text => this.validate(text, "password")}
+                            value={this.state.password}
+                        />
+                    </View>
+                    <Text style={Styles.error}>
+                        {this.state.errps}
+                    </Text>
 
-                        <View style={Styles.InputImage}>
-                            <Image
-                                source={require('../Images/lock.png')}
-                                style={Styles.ImageStyle}
-                            />
-                            <TextInput
-                                style={Styles.inputField}
-                                placeholder='Password'
-                                keyboardType='default'
-                                underlineColorAndroid="transparent"
-                                secureTextEntry={true}
-                                onChangeText={text => this.validate(text, "password")}
-                                value={this.state.password}
-                            />
-                        </View>
-                        <Text style={Styles.error}>
-                            {this.state.errps}
-                        </Text>
+                    <View style={Styles.InputImage}>
+                        <Image
+                            source={require('../Images/mail.png')}
+                            style={Styles.ImageStyle}
+                        />
+                        <TextInput
+                            style={Styles.inputField}
+                            placeholder='Email Address'
+                            keyboardType='email-address'
+                            underlineColorAndroid="transparent"
+                            onChangeText={text => this.validate(text, "email")}
+                            value={this.state.email}
+                        />
+                    </View>
+                    <Text style={Styles.error}>
+                        {this.state.errem}
+                    </Text>
 
-                        <View style={Styles.InputImage}>
-                            <Image
-                                source={require('../Images/lock.png')}
-                                style={Styles.ImageStyle}
-                            />
-                            <TextInput
-                                style={Styles.inputField}
-                                placeholder='Confirm Password'
-                                keyboardType='default'
-                                underlineColorAndroid="transparent"
-                                secureTextEntry={true}
-                                onChangeText={text => this.validate(text, "confirmPassword")}
-                                value={this.state.confirmPassword}
-                            />
-                        </View>
-                        <Text style={Styles.error}>{
-                            this.state.errcps}
-                        </Text>
+                    <View style={Styles.InputImage}>
+                        <Image
+                            source={require('../Images/lock.png')}
+                            style={Styles.ImageStyle}
+                        />
+                        <TextInput
+                            style={Styles.inputField}
+                            placeholder='Phone Number'
+                            keyboardType='number-pad'
+                            underlineColorAndroid="transparent"
+                            onChangeText={text => this.validate(text, "PhoneNumber")}
+                            value={this.state.PhoneNumber}
+                        />
+                    </View>
+                    <Text style={Styles.error}>{
+                        this.state.errpn}
+                    </Text>
 
-                        <View style={Styles.InputImage}>
-                            <Image
-                                source={require('../Images/mail.png')}
-                                style={Styles.ImageStyle}
-                            />
-                            <TextInput
-                                style={Styles.inputField}
-                                placeholder='Email Address'
-                                keyboardType='email-address'
-                                underlineColorAndroid="transparent"
-                                onChangeText={text => this.validate(text, "email")}
-                                value={this.state.email}
-                            />
-                        </View>
-                        <Text style={Styles.error}>
-                            {this.state.errem}
-                        </Text>
+                    <View style={Styles.InputImage}>
+                        <Image
+                            source={require('../Images/lock.png')}
+                            style={Styles.ImageStyle}
+                        />
+                        <TextInput
+                            style={Styles.inputField}
+                            placeholder='Shop Name'
+                            underlineColorAndroid="transparent"
+                            onChangeText={text => this.validate(text, "ShopName")}
+                            value={this.state.ShopName}
+                        />
+                    </View>
+                    <Text style={Styles.error}>{
+                        this.state.errsn}
+                    </Text>
 
-                        <TouchableOpacity
-                            style={Styles.SignUpBtns}
-                            onPress={this.goToLogin}
-                            disabled={this.state.btnDisabled}
-                        >
-                            <Text style={Styles.BtnText}>Log In</Text>
-                        </TouchableOpacity>
-                        <Text onPress={() => {
-                            this.setState(this.initialState);
-                            this.props.navigation.navigate('Login')
-                        }}
-                            style={{ color: '#4c516d', marginVertical: responsiveHeight(4) }}>
-                            Already have an account?
+
+                    <TouchableOpacity
+                        style={Styles.SignUpBtns}
+                        onPress={this.goToLogin}
+                        disabled={this.state.btnDisabled}
+                    >
+                        <Text style={Styles.BtnText}>Log In</Text>
+                    </TouchableOpacity>
+                    <Text onPress={() => {
+                        this.setState(this.initialState);
+                        this.props.navigation.navigate('Login')
+                    }}
+                        style={{ color: '#4c516d', marginVertical: responsiveHeight(4), fontSize: responsiveFontSize(1.8) }}>
+                        Already have an account?
                         <Text style={{ color: '#008080' }}>Login</Text>
-                        </Text>
-                    </Card>
+                    </Text>
+                </Card>
             </SafeAreaView>
         )
     }
