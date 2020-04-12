@@ -81,7 +81,7 @@ export default class SignUpScreen extends Component {
    goToLogin = async () => {
         console.log('hello i am here')
         let obj = { 'name': 'name' }
-        await firebase.firestore().collection('Users').doc().set(obj).then(() => console.log('hello world')).catch((error) => console.log('hello2\n:::::', error));
+firebase.firestore().collection('Users').doc().set(obj).then(() => console.log('hello world')).catch((error) => console.log('hello2\n:::::', error));
     }
 
     /* goToLogin = async () => {
