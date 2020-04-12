@@ -35,6 +35,8 @@ const RootStack = createStackNavigator( //Navigation Stack
     defaultNavigationOptions:
     {
       header: null
+
+      //testing git from vs code
     }
   }
 );
