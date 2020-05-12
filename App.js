@@ -5,8 +5,8 @@ import { createStackNavigator } from 'react-navigation-stack';
 import * as firebase from 'firebase'
 import firestore from 'firebase/firestore'
 
-import LoginScreen from './Screens/LoginScreen'
-import SignUpScreen from './Screens/SignupScreen'
+import UserLoginScreen from './Screens/UserLoginScreen'
+import UserSignUpScreen from './Screens/UserSignupScreen'
 
 console.disableYellowBox = true;
 
@@ -28,8 +28,9 @@ if (!firebase.apps.length) {
 
 const RootStack = createStackNavigator( //Navigation Stack
   {
-    Login: LoginScreen,
-    Signup: SignUpScreen,
+    
+    Login: UserLoginScreen,
+    Signup: UserSignUpScreen,
   },
   {
     defaultNavigationOptions:
